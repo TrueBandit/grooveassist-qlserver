@@ -53,7 +53,7 @@ const server = new ApolloServer({
 await server.start();
 app.use('/graphql', cors(), bodyParser.json(), expressMiddleware(server));
 
-const PORT = process.env.API_PORT;
+const PORT = process.env.PORT;
 // Now that our HTTP server is fully set up, we can listen to it.
 httpServer.listen(PORT, () => {
   console.log(`🚀 ${'Query endpoint:'.green} ${`http://localhost:${PORT}/graphql`.yellow}`);

@@ -60,7 +60,7 @@ const generateAndStream = async (userInput) => {
           // Massage and parse the chunk of data
           const chunk = decoder.decode(value);
           const lines = chunk.split("\n");
-          console.log(lines)
+          //DEBUG console.log(lines)
           const parsedLines = lines
             .map((line) => line.replace(/^data: /, "").trim()) // Remove the "data: " prefix
             .filter((line) => line !== "" && line !== "[DONE]") // Remove empty lines and "[DONE]"
@@ -74,13 +74,13 @@ const generateAndStream = async (userInput) => {
             if (function_call) {
               let lastBit = function_call.arguments.replace("\n", "").replace("\\", "");
               if (lastBit!== "" && lastBit!== " ") {
-                console.log("*___"+lastBit.red+"___*")
+                //DEBUG console.log("*___"+lastBit.red+"___*")
                 pubSub.publish('NEW_RESPONSE', { responseStream: lastBit });
               }
             }
           }
         }
-        console.log("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-".bgYellow)
+        //DEBUG console.log("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-".bgYellow)
       } catch (error) {
           console.error("Error:", error);
           return "Error occurred while generating.";
