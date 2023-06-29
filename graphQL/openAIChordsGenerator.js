@@ -1,9 +1,63 @@
 //import { Configuration, OpenAIApi } from 'openai'
 import 'colors'
-import pubSub from './pubSub.js'
+import pubSub from './pubsub.js'
 import 'dotenv/config'
 
-const assistantDescription = "As an accomplished music composer and producer, you're skilled in creating custom chord progressions that meet various specifications from the user. If no guidelines are provided, you're free to improvise. Following each creation, you provide a brief harmonic analysis of the progression, explaining how theoretical elements influence and evoke emotions. Avoid restating the chord progression in your analysis. Always name a song that shares similarities with the created progression for reference."
+const assistant_description = "As an accomplished music composer and producer, you're skilled in creating custom chord progressions that meet various specifications from the user. If no guidelines are provided, you're free to improvise. Following each creation, you provide a brief harmonic analysis of the progression, explaining how theoretical elements influence and evoke emotions. Avoid restating the chord progression in your analysis. Always name a song that shares similarities with the created progression for reference."
+
+const openai_functions_string = [{
+  "name": "gen_chords",
+  "description": "Get a list of chords and an explanation",
+  "parameters": {
+      "type": "object",
+      "properties": {
+          "chords": {
+              "type": "array",
+              "description": "list of all the chords in the progression",
+              "items" : { "type": "object",
+                          "properties": { 
+                              "chord": {
+                                "type": "string",
+                                "description": "a chord (root and extension)",
+                                },
+                              "bars": {
+                                  "type": "string",
+                                  "description": "the number of bars the chord lasts",
+                                }}}},
+          "exp": {
+            "type": "string",
+            "description": "the explantion about the chord progression",}
+      },
+      "required": ["chords", "root", "bars", "explanation"]}
+}];
+
+const buildPrompt = (promptObj) => {
+
+  let { artist = '', genre = '', level = '', key = '', bars = '' } = promptObj;
+
+  if (bars === null || bars === undefined || bars === '') {
+    bars = '8';
+  }
+
+  let query = "Generate a chord progression";
+  if (artist) {
+    query += ` that reflects the songs and writing style of ${artist}`;
+  }
+  if (genre) {
+    query += ` using the chord extensions, form, and harmonies typically found in ${genre} music`;
+  }
+  if (level) {
+    query += ` that is suitable for a ${level}-level player`;
+  }
+  if (key) {
+    query += ` in the key of ${key}`;
+  }
+  query += ` that is ${bars} bars long. please attach explanation and example song`;
+
+  return query;
+};
+
+
 
 const generateAndStream = async (userInput) => {
   
@@ -18,33 +72,9 @@ const generateAndStream = async (userInput) => {
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo-0613",
-            messages: [{"role": "system", "content": assistantDescription}, {role: "user", content: prompt}],
+            messages: [{"role": "system", "content": assistant_description}, {role: "user", content: prompt}],
             stream: true,
-            functions: [{
-              "name": "gen_chords",
-              "description": "Get a list of chords and an explanation",
-              "parameters": {
-                  "type": "object",
-                  "properties": {
-                      "chords": {
-                          "type": "array",
-                          "description": "list of all the chords in the progression",
-                          "items" : { "type": "object",
-                                      "properties": { 
-                                          "chord": {
-                                            "type": "string",
-                                            "description": "a chord (root and extension)",
-                                            },
-                                          "bars": {
-                                              "type": "string",
-                                              "description": "the number of bars the chord lasts",
-                                            }}}},
-                      "exp": {
-                        "type": "string",
-                        "description": "the explantion about the chord progression",}
-                  },
-                  "required": ["chords", "root", "bars", "explanation"]}
-          }],
+            functions: openai_functions_string,
           function_call: {"name": "gen_chords"},
           }),
         });
@@ -85,32 +115,6 @@ const generateAndStream = async (userInput) => {
           console.error("Error:", error);
           return "Error occurred while generating.";
       }
-}
-
-const buildPrompt = (promptObj) => {
-
-  let { artist = '', genre = '', level = '', key = '', bars = '' } = promptObj;
-
-  if (bars === null || bars === undefined || bars === '') {
-    bars = '8';
-  }
-
-  let query = "Generate a chord progression";
-  if (artist) {
-    query += ` that reflects the songs and writing style of ${artist}`;
-  }
-  if (genre) {
-    query += ` using the chord extensions, form, and harmonies typically found in ${genre} music`;
-  }
-  if (level) {
-    query += ` that is suitable for a ${level}-level player`;
-  }
-  if (key) {
-    query += ` in the key of ${key}`;
-  }
-  query += ` that is ${bars} bars long. please attach explanation and example song`;
-
-  return query;
 }
 
 export { generateAndStream }
