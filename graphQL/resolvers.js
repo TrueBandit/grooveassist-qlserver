@@ -1,7 +1,7 @@
 import 'colors'
 import { users } from '../database/users.js'
 import { generateAndStream } from './openAIChordsGenerator.js'
-import pubSub from './pubSub.js'
+import pubSub from './pubsub.js'
 import 'dotenv/config'
 
 const resolvers = {
