@@ -8,11 +8,12 @@ type Query {
 type Mutation {
     addUser(newUser: UserInput): [User]
     deleteUserById(id: Int): [User]
-    generateResponse(PromptObj:PromptObjectInput): String
+    generateResponse(promptObj: PromptObjectInput, requestId: String): String
+    getRequestID: String
 }
 
 type Subscription {
-    responseStream: String
+    responseStream(id: String): String
 }
 
 type User {

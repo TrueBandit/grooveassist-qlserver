@@ -2,6 +2,7 @@ import 'colors'
 import { users } from '../database/users.js'
 import { generateAndStream } from './openAIChordsGenerator.js'
 import pubSub from './pubsub.js'
+import { v4 as uuidv4 } from 'uuid'
 import 'dotenv/config'
 
 const resolvers = {
@@ -29,14 +30,18 @@ const resolvers = {
             }
             return users;
           },
-        generateResponse: async (parent, args) => { 
-            await generateAndStream(args.PromptObj)
-            return "Generation reached server"
+        getRequestID: () => {
+            const requestId = uuidv4()
+            return requestId
+          },    
+        generateResponse: async (parent, args) => {
+            await generateAndStream(args.promptObj, args.requestId)
+            return "stream finished"
           }
     },
     Subscription: {
         responseStream: {
-            subscribe: () => pubSub.asyncIterator(['NEW_RESPONSE']),
+            subscribe: (parent, args) => pubSub.asyncIterator(args.id),
         }
     }
 }

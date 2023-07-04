@@ -59,7 +59,7 @@ const buildPrompt = (promptObj) => {
 
 
 
-const generateAndStream = async (userInput) => {
+const generateAndStream = async (userInput, requestId) => {
   
   const prompt = buildPrompt(userInput)
 
@@ -105,7 +105,7 @@ const generateAndStream = async (userInput) => {
               let lastBit = function_call.arguments.replace("\n", "").replace("\\", "");
               if (lastBit!== "" && lastBit!== " ") {
                 //DEBUG console.log("*___"+lastBit.red+"___*")
-                pubSub.publish('NEW_RESPONSE', { responseStream: lastBit });
+                pubSub.publish(requestId, { responseStream: lastBit });
               }
             }
           }
