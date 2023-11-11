@@ -10,11 +10,19 @@ import express from 'express';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/lib/use/ws';
+import connectDB from './configs/atlas_db.js'; 
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
+// Connection to DB
+const startServer = async () => {
+  await connectDB();
+}
+startServer().catch(err => console.error(err));
+
 // Create the schema, which will be used separately by ApolloServer and
 // the WebSocket server.
+
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 // Create an Express app and HTTP server; we will attach both the WebSocket
@@ -51,13 +59,14 @@ const server = new ApolloServer({
 });
 
 await server.start();
+
 app.use('/graphql', cors(), bodyParser.json(), expressMiddleware(server));
 
 const PORT = process.env.PORT;
 // Now that our HTTP server is fully set up, we can listen to it.
 httpServer.listen(PORT, () => {
-  console.log(`🚀 ${'Query endpoint:'.green} ${`http://localhost:${PORT}/graphql`.yellow}`);
-  console.log(`🚀 ${'Subscription endpoint:'.green} ${`ws://localhost:${PORT}/graphql`.magenta}`);
+  console.log(`🚀 ${'Query endpoint:'.blue} ${`http://localhost:${PORT}/graphql`.magenta}`);
+  console.log(`🚀 ${'Subscription endpoint:'.blue} ${`ws://localhost:${PORT}/graphql`.magenta}`);
 });
 
 

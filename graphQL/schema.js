@@ -2,12 +2,13 @@ export const typeDefs = `#graphql
 
 type Query {
     getAllUsers : [User],
-    getUser(id : Int) : User
+    getUser(id : String) : User,
+    login(userLoginObject: UserLoginInput): AuthPayload
 }
 
 type Mutation {
-    addUser(newUser: UserInput): [User]
-    deleteUserById(id: Int): [User]
+    addUser(newUser: UserInput): AuthPayload
+    deleteUserById(id: String): String
     generateResponse(promptObj: PromptObjectInput, requestId: String): String
     getRequestID: String
 }
@@ -17,23 +18,39 @@ type Subscription {
 }
 
 type User {
-    id: Int
-    name: String
-    age: Int
+    _id: String,
+    fname: String,
+    lname: String,
+    email: String,
+    password: String,
+    type: String
+}
+
+type AuthPayload {
+    token: String
+    user: User
 }
 
 input UserInput {
-    id: Int
-    name: String
-    age: Int
+    fname: String,
+    lname: String,
+    email: String,
+    password: String,
+    type: String
 }
 
 input PromptObjectInput {
-    artist : String
-    bars : String
-    genre : String
-    level : String
-    key : String
+    artist: String
+    bars: String
+    genre: String
+    level: String
+    key: String
+}
+
+input UserLoginInput {
+    email: String,
+    password: String
 }
 
 `
+
