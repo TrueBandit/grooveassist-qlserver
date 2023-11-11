@@ -1,18 +1,7 @@
 import 'colors';
-import pubSub from '../configs/pubsub.js';
 import 'dotenv/config';
 
 // Assistant description for the OpenAI model to understand the context of the interaction
-/*
-const assistant_description = `
-  As an accomplished music composer and producer, you're skilled in creating custom chord progressions 
-  that meet various specifications from the user. If no guidelines are provided, you're free to improvise. 
-  Following each creation, you provide a brief harmonic analysis of the progression, explaining how 
-  theoretical elements influence and evoke emotions. Avoid restating the chord progression in your 
-  analysis. Always name a song that shares similarities with the created progression for reference.
-`;
-*/
-
 const assistant_description = `
   As a skilled music composer and producer, my role is to craft custom chord progressions based on specific parameters provided by users.
   These parameters play a crucial role in shaping the selection and structure of the chord progressions. 
@@ -27,23 +16,23 @@ const assistant_description = `
 // Custom function definition for OpenAI's function calling feature
 const openai_functions_string = [{
   "name": "gen_chords",
-  "description": "Get a list of chords and an explanation",
+  "description": "Get a list of chords and an explanation.",
   "parameters": {
       "type": "object",
       "properties": {
           "chords": {
               "type": "array",
-              "description": "list of all the chords in the progression",
+              "description": "list of all the chords in the progression.",
               "items": { 
                   "type": "object",
                   "properties": { 
                       "chord": {
                         "type": "string",
-                        "description": "a chord (root and extension)",
+                        "description": "a chord (root and extension).",
                       },
                       "bars": {
                         "type": "string",
-                        "description": "the number of bars the chord lasts",
+                        "description": "the number of bars the chord lasts.",
                       }
                   }
               }
@@ -78,8 +67,7 @@ const buildPrompt = (promptObj) => {
 
 
 // Function to handle streaming response from OpenAI
-const generateAndStream = async (userInput, requestId) => {
-
+const generateChords = async (userInput) => {
   const prompt = buildPrompt(userInput);
 
   try {
@@ -93,50 +81,37 @@ const generateAndStream = async (userInput, requestId) => {
         model: "gpt-3.5-turbo-0613",
         max_tokens: 600,
         messages: [{"role": "system", "content": assistant_description}, {role: "user", content: prompt}],
-        stream: true,
         functions: openai_functions_string,
         function_call: {"name": "gen_chords"},
       }),
     });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    let incompleteChunk = ''; // Variable to store incomplete data chunks
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-
-      const chunk = incompleteChunk + decoder.decode(value, { stream: true });
-      const lines = chunk.split("\n");
-
-      incompleteChunk = lines.pop() || ''; // Store the last line as the next incomplete chunk
-
-      lines.forEach(line => {
-        line = line.replace(/^data: /, '').trim(); // Remove the "data: " prefix
-        if (line.startsWith("{") && line !== "[DONE]") {
-          try {
-            const parsedLine = JSON.parse(line);
-            if (parsedLine.choices[0].delta.function_call) {
-              const functionArguments = parsedLine.choices[0].delta.function_call.arguments;
-              if (functionArguments) {
-                pubSub.publish(requestId, { responseStream: functionArguments });
-              }
-            }
-          } catch (error) {
-            console.error("Error parsing JSON: ", line, error);
-          }
-        }
-      });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    const messageObject = data.choices[0].message;
+    const argumentsJson = JSON.parse(messageObject.function_call.arguments);
+
+    //console.log('Parsed Arguments:', argumentsJson);
+
+    return {
+      chords: argumentsJson.chords.map(chord => ({
+          chord: chord.chord,
+          bars: chord.bars
+      })),
+      exp: argumentsJson.exp,
+      song: argumentsJson.song
+  };
+
+
   } catch (error) {
     console.error("Error occurred while generating: ", error);
     return "Error occurred while generating.".red;
   }
 };
 
+
 // Exporting the generateAndStream function for external usage
-export { generateAndStream };
+export { generateChords };

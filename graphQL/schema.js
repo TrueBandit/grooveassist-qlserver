@@ -9,12 +9,7 @@ type Query {
 type Mutation {
     addUser(newUser: UserInput): AuthPayload
     deleteUserById(id: String): String
-    generateResponse(promptObj: PromptObjectInput, requestId: String): String
-    getRequestID: String
-}
-
-type Subscription {
-    responseStream(id: String): String
+    generateChords(promptObj: PromptObjectInput): ProgressionObject
 }
 
 type User {
@@ -29,6 +24,17 @@ type User {
 type AuthPayload {
     token: String
     user: User
+}
+
+type ProgressionObject {
+    chords: [Chord]
+    exp: String
+    song: String
+}
+
+type Chord {
+    chord: String
+    bars: String
 }
 
 input UserInput {
@@ -54,3 +60,15 @@ input UserLoginInput {
 
 `
 
+/*
+
+type Mutation {
+    generateResponse(promptObj: PromptObjectInput, requestId: String): String
+    getRequestID: String
+}
+
+type Subscription {
+    responseStream(id: String): String
+}
+
+*/
