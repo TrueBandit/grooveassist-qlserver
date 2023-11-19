@@ -30,6 +30,7 @@ type ProgressionObject {
     chords: [Chord]
     exp: String
     song: String
+    brief: String
 }
 
 type Chord {

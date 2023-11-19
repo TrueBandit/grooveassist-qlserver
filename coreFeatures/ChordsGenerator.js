@@ -18,35 +18,39 @@ const openai_functions_string = [{
   "name": "gen_chords",
   "description": "Get a list of chords and an explanation.",
   "parameters": {
-      "type": "object",
-      "properties": {
-          "chords": {
-              "type": "array",
-              "description": "list of all the chords in the progression.",
-              "items": { 
-                  "type": "object",
-                  "properties": { 
-                      "chord": {
-                        "type": "string",
-                        "description": "a chord (root and extension).",
-                      },
-                      "bars": {
-                        "type": "string",
-                        "description": "the number of bars the chord lasts.",
-                      }
-                  }
-              }
-          },
-          "exp": {
-            "type": "string",
-            "description": "the explanation about the chord progression",
-          },
-          "song": {
-            "type": "string",
-            "description": "a song with the same or similar chord progression and how is it similar",
+    "type": "object",
+    "properties": {
+      "chords": {
+        "type": "array",
+        "description": "list of all the chords in the progression.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "chord": {
+              "type": "string",
+              "description": "a chord (root and extension).",
+            },
+            "bars": {
+              "type": "string",
+              "description": "the number of bars the chord lasts.",
+            }
           }
+        }
       },
-      "required": ["chords", "exp" , "song"]
+      "exp": {
+        "type": "string",
+        "description": "the explanation about the chord progression",
+      },
+      "song": {
+        "type": "string",
+        "description": "a song with the same or similar chord progression and how is it similar",
+      },
+      "brief": {
+        "type": "string",
+        "description": "a sentence describing the progression",
+      }
+    },
+    "required": ["chords", "exp", "song", "brief"]
   }
 }];
 
@@ -60,7 +64,7 @@ const buildPrompt = (promptObj) => {
   query += level ? `with chords, extensions and complexity that suits a ${level}-level player, ` : '';
   query += key ? `in the key of ${key}, ` : '';
   query += (bars && bars.length > 0) ? `consisting of ${bars} bars. ` : `consisting of 8 bars. `;
-  query += "Additionally, provide a song with a similar or the same chord progression for reference.";
+  query += "Additionally, provide: a song with a similar or the same chord progression for reference and a short 4-5 word sentence describing the progression for a generated progressions history list";
 
   return query;
 };
@@ -80,9 +84,9 @@ const generateChords = async (userInput) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo-0613",
         max_tokens: 600,
-        messages: [{"role": "system", "content": assistant_description}, {role: "user", content: prompt}],
+        messages: [{ "role": "system", "content": assistant_description }, { role: "user", content: prompt }],
         functions: openai_functions_string,
-        function_call: {"name": "gen_chords"},
+        function_call: { "name": "gen_chords" },
       }),
     });
 
@@ -98,12 +102,13 @@ const generateChords = async (userInput) => {
 
     return {
       chords: argumentsJson.chords.map(chord => ({
-          chord: chord.chord,
-          bars: chord.bars
+        chord: chord.chord,
+        bars: chord.bars
       })),
       exp: argumentsJson.exp,
-      song: argumentsJson.song
-  };
+      song: argumentsJson.song,
+      brief: argumentsJson.brief,
+    };
 
 
   } catch (error) {
