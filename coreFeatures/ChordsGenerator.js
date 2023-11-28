@@ -1,122 +1,75 @@
 import 'colors';
 import 'dotenv/config';
+import { Configuration, OpenAIApi } from 'openai';
 
-// Assistant description for the OpenAI model to understand the context of the interaction
-const assistant_description = `
-  As a skilled music composer and producer, my role is to craft custom chord progressions based on specific parameters provided by users.
-  These parameters play a crucial role in shaping the selection and structure of the chord progressions. 
-  In instances where no specific guidelines are provided, I have the flexibility to improvise. After creating each chord progression, 
-  I conduct a brief harmonic analysis. This analysis focuses on explaining the role of theoretical elements in the progression and how they contribute to evoking emotions. 
-  It is important to note that my analysis will not merely restate the chord progression. 
-  Instead, it will delve into the underlying musical theory. Moreover, for every chord progression created, 
-  I will also identify and name a song that features a similar or identical chord progression, providing a practical reference for the users.
-`;
-
-
-// Custom function definition for OpenAI's function calling feature
-const openai_functions_string = [{
-  "name": "gen_chords",
-  "description": "Get a list of chords and an explanation.",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "chords": {
-        "type": "array",
-        "description": "list of all the chords in the progression.",
-        "items": {
-          "type": "object",
-          "properties": {
-            "chord": {
-              "type": "string",
-              "description": "a chord (root and extension).",
-            },
-            "bars": {
-              "type": "string",
-              "description": "the number of bars the chord lasts.",
-            }
-          }
-        }
-      },
-      "exp": {
-        "type": "string",
-        "description": "the explanation about the chord progression",
-      },
-      "song": {
-        "type": "string",
-        "description": "a song with the same or similar chord progression and how is it similar",
-      },
-      "brief": {
-        "type": "string",
-        "description": "a sentence describing the progression",
-      }
-    },
-    "required": ["chords", "exp", "song", "brief"]
-  }
-}];
-
-// Function to build the prompt for the OpenAI model
 const buildPrompt = (promptObj) => {
   let { artist = '', genre = '', level = '', key = '', bars = '' } = promptObj;
-
-  let query = "Generate a chord progression influenced by ";
+  let query = "Generate a chord progression ";
   query += artist ? `that reflects the songs and writing style of ${artist}, ` : '';
   query += genre ? `using the chord extensions, form, and harmonies typically found in ${genre} music, ` : '';
   query += level ? `with chords, extensions and complexity that suits a ${level}-level player, ` : '';
   query += key ? `in the key of ${key}, ` : '';
   query += (bars && bars.length > 0) ? `consisting of ${bars} bars. ` : `consisting of 8 bars. `;
-  query += "Additionally, provide: a song with a similar or the same chord progression for reference and a short 4-5 word sentence describing the progression for a generated progressions history list";
-
   return query;
 };
 
+const prompt_annex = `
 
-// Function to handle streaming response from OpenAI
-const generateChords = async (userInput) => {
-  const prompt = buildPrompt(userInput);
+Ensure the output contains the following data:
+    How many bars each chord lasts, 
+    An harmonic explanation behind the progression, 
+    A song with the same progression, even in another key,
+    and a 4-5 words for a brief description of the progression.
 
-  try {
-    const response = await fetch(process.env.OPENAI_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo-0613",
-        max_tokens: 600,
-        messages: [{ "role": "system", "content": assistant_description }, { role: "user", content: prompt }],
-        functions: openai_functions_string,
-        function_call: { "name": "gen_chords" },
-      }),
-    });
+Follow this pydantic specification for output.
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+class Chord(Basemodel):
+    chord_name: str
+    notes: conlist(item_type=str)
+    bars: str
 
-    const data = await response.json();
-    const messageObject = data.choices[0].message;
-    const argumentsJson = JSON.parse(messageObject.function_call.arguments);
+class Progression(Basemodel):
+    chords: conlist(item_type=Chord)
+    explanation: str
+    similar_song: str
+    brief_description: str
+    `
 
-    //console.log('Parsed Arguments:', argumentsJson);
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_GPT4_KEY
+});
 
-    return {
-      chords: argumentsJson.chords.map(chord => ({
-        chord: chord.chord,
-        bars: chord.bars
-      })),
-      exp: argumentsJson.exp,
-      song: argumentsJson.song,
-      brief: argumentsJson.brief,
-    };
+const openai = new OpenAIApi(configuration);
 
+async function generateChords(userInput) {
 
-  } catch (error) {
-    console.error("Error occurred while generating: ", error);
-    return "Error occurred while generating.".red;
+  const user_prompt = buildPrompt(userInput);
+  const final_prompt = user_prompt + prompt_annex
+
+  const completion = await openai.createChatCompletion({
+    model: "gpt-4-1106-preview",
+    response_format: { "type": "json_object" },
+    temperature: 0.2,
+    messages: [
+      { role: "system", content: "Please output valid JSON" },
+      { role: "user", content: final_prompt }
+    ]
+  });
+
+  const response = JSON.parse(completion.data.choices[0].message.content);
+
+  return {
+    chords: response.chords.map(chord => ({
+      chord: chord.chord_name,
+      notes: chord.notes,
+      bars: chord.bars
+    })),
+    exp: response.explanation,
+    song: response.similar_song,
+    brief: response.brief_description,
   }
-};
+}
 
 
-// Exporting the generateAndStream function for external usage
 export { generateChords };
+
