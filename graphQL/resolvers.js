@@ -1,10 +1,11 @@
 import 'colors';
-import { generateChords } from '../coreFeatures/ChordsGenerator.js';
-import { authController } from '../configs/authController.js';
 import 'dotenv/config';
 
-// Import user-related functions from UserBL
+import { generateChords } from '../coreFeatures/ChordsGenerator.js';
+import { authController } from '../configs/authController.js';
 import { getAllUsers, getUserById, addUser, deleteUser } from './models/userBL.js';
+import { getAllProgressions, getUserProgressions } from './models/progressionBL.js';
+
 
 const resolvers = {
     Query: {
@@ -18,6 +19,8 @@ const resolvers = {
                 throw new Error(error.message);
             }
         },
+        getAllProgressions: () => getAllProgressions(),
+        getUserProgressions: (parent, args) => getUserProgressions({ id: args.id }),
     },
     Mutation: {
         addUser: async (parent, args) => {
@@ -29,7 +32,7 @@ const resolvers = {
                     ...args.newUser
                 }
                 return {
-                    token, 
+                    token,
                     user: newUser
                 };
             } catch (error) {

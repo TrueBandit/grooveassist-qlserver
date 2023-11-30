@@ -4,6 +4,8 @@ type Query {
     getAllUsers : [User],
     getUser(id : String) : User,
     login(userLoginObject: UserLoginInput): AuthPayload
+    getAllProgressions : [FullProgressionObject],
+    getUserProgressions(id: String): [FullProgressionObject]
 }
 
 type Mutation {
@@ -26,16 +28,29 @@ type AuthPayload {
     user: User
 }
 
+type FullProgressionObject {
+    _id: String,
+    userID: String,
+    creationTime: CreationTime,
+    prog: ProgressionObject
+}
+
 type ProgressionObject {
-    chords: [Chord]
-    exp: String
-    song: String
-    brief: String
+    chords: [Chord],
+    explanation: String,
+    similar_song: String,
+    brief_description: String
 }
 
 type Chord {
-    chord: String
-    bars: String
+    chord_name: String,
+    bars: String,
+    notes: [String]
+}
+
+type CreationTime {
+    day: String,
+    time: String
 }
 
 input UserInput {
@@ -47,10 +62,10 @@ input UserInput {
 }
 
 input PromptObjectInput {
-    artist: String
-    bars: String
-    genre: String
-    level: String
+    artist: String,
+    bars: String,
+    genre: String,
+    level: String,
     key: String
 }
 
@@ -58,6 +73,7 @@ input UserLoginInput {
     email: String,
     password: String
 }
+
 
 `
 

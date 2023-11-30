@@ -49,7 +49,7 @@ async function generateChords(userInput) {
   const completion = await openai.createChatCompletion({
     model: "gpt-4-1106-preview",
     response_format: { "type": "json_object" },
-    temperature: 0.2,
+    temperature: 0.7,
     messages: [
       { role: "system", content: "Please output valid JSON" },
       { role: "user", content: final_prompt }
@@ -60,13 +60,13 @@ async function generateChords(userInput) {
 
   return {
     chords: response.chords.map(chord => ({
-      chord: chord.chord_name,
+      chord_name: chord.chord_name,
       notes: chord.notes,
       bars: chord.bars
     })),
-    exp: response.explanation,
-    song: response.similar_song,
-    brief: response.brief_description,
+    explanation: response.explanation,
+    similar_song: response.similar_song,
+    brief_description: response.brief_description,
   }
 }
 
