@@ -1,11 +1,9 @@
-import 'colors';
+/*import 'colors';
 import pubSub from '../configs/pubsub.js';
 import 'dotenv/config';
 
 
-/*
-11/11/23
-*/
+
 
 // Assistant description for the OpenAI model to understand the context of the interaction
 const assistant_description = `
@@ -135,3 +133,5 @@ const generateAndStream = async (userInput, requestId) => {
 
 // Exporting the generateAndStream function for external usage
 export { generateAndStream };
+
+*/

@@ -1,6 +1,7 @@
 export const typeDefs = `#graphql
 
 type Query {
+    getRequestID: String
     getAllUsers : [User],
     getUser(id : String) : User,
     login(userLoginObject: UserLoginInput): AuthPayload
@@ -11,7 +12,11 @@ type Query {
 type Mutation {
     addUser(newUser: UserInput): AuthPayload
     deleteUserById(id: String): String
-    generateChords(promptObj: PromptObjectInput): ProgressionObject
+    generateChords(promptObj: PromptObjectInput, requestID: String): String
+}
+
+type Subscription {
+    generatedProg(id: String): ProgressionObject
 }
 
 type User {
@@ -76,16 +81,3 @@ input UserLoginInput {
 
 
 `
-
-/*
-
-type Mutation {
-    generateResponse(promptObj: PromptObjectInput, requestId: String): String
-    getRequestID: String
-}
-
-type Subscription {
-    responseStream(id: String): String
-}
-
-*/
