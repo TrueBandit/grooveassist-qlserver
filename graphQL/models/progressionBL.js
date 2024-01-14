@@ -4,9 +4,21 @@ const getAllProgressions = (params) => {
     return ProgressionModel.find({}).exec();
 };
 
-const getUserProgressions = (params) => {
+const findUserProgressions = (params) => {
     let userID = params.id;
     return ProgressionModel.find({ "userID": userID }).exec()
 };
 
-export { getAllProgressions, getUserProgressions };
+const saveUserProgression = async (params) => {
+    let newProg = new ProgressionModel(params.newProg);
+    await newProg.save();
+    return newProg._id;
+};
+
+const deleteProgression = async (params) => {
+    const id = params.id;
+    await ProgressionModel.findByIdAndDelete(id)
+    return "Deleted!"
+};
+
+export { getAllProgressions, findUserProgressions, saveUserProgression, deleteProgression };

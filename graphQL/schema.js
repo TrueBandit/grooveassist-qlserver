@@ -6,13 +6,14 @@ type Query {
     getUser(id : String) : User,
     login(userLoginObject: UserLoginInput): AuthPayload
     getAllProgressions : [FullProgressionObject],
-    getUserProgressions(id: String): [FullProgressionObject]
+    getUserProgressions(token: String): [FullProgressionObject]
 }
 
 type Mutation {
     addUser(newUser: UserInput): AuthPayload
     deleteUserById(id: String): String
     generateChords(promptObj: PromptObjectInput, requestID: String): String
+    saveNewProgression(ProgObj: ProgressionObjectInput, token: String): FullProgressionObject
 }
 
 type Subscription {
@@ -77,6 +78,19 @@ input PromptObjectInput {
 input UserLoginInput {
     email: String,
     password: String
+}
+
+input ChordInput {
+    chord_name: String,
+    bars: String,
+    notes: [String]
+}
+
+input ProgressionObjectInput {
+    chords: [ChordInput],
+    explanation: String,
+    similar_song: String,
+    brief_description: String
 }
 
 
